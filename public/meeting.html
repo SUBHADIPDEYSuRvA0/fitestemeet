@@ -31,14 +31,16 @@
         
         .video-grid {
             flex: 1;
-            display: grid;
-            gap: 8px;
+            position: relative;
             padding: 16px;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            grid-auto-rows: minmax(200px, 1fr);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        
-        .video-container {
+
+        .main-video-container {
+            width: 100%;
+            height: 100%;
             position: relative;
             background: #3c4043;
             border-radius: 8px;
@@ -47,17 +49,45 @@
             align-items: center;
             justify-content: center;
         }
-        
-        .video-container video {
+
+        .main-video-container video {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        
-        .video-container.local {
+
+        .local-video-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 200px;
+            height: 150px;
+            background: #3c4043;
+            border-radius: 8px;
+            overflow: hidden;
             border: 2px solid #1a73e8;
+            z-index: 10;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
-        
+
+        .local-video-container:hover {
+            transform: scale(1.05);
+        }
+
+        .local-video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .participant-info {
             position: absolute;
             bottom: 8px;
@@ -66,6 +96,100 @@
             padding: 4px 8px;
             border-radius: 4px;
             font-size: 12px;
+            z-index: 5;
+        }
+
+        .no-video {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #9aa0a6;
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #1a73e8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .local-video-container .avatar {
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+        }
+
+        .connection-status {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 5;
+        }
+
+        .main-participant-name {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            z-index: 5;
+        }
+
+        .waiting-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #9aa0a6;
+            text-align: center;
+        }
+
+        .waiting-message h2 {
+            margin-bottom: 16px;
+            font-size: 24px;
+        }
+
+        .waiting-message p {
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .local-video-container {
+                width: 120px;
+                height: 90px;
+                top: 10px;
+                right: 10px;
+            }
+            
+            .local-video-container .avatar {
+                width: 30px;
+                height: 30px;
+                font-size: 12px;
+            }
+            
+            .main-participant-name {
+                top: 10px;
+                left: 10px;
+                font-size: 14px;
+                padding: 6px 10px;
+            }
         }
         
         .controls {
@@ -217,27 +341,7 @@
             font-size: 12px;
         }
         
-        .no-video {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            color: #9aa0a6;
-        }
         
-        .avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: #1a73e8;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            font-weight: 500;
-            margin-bottom: 8px;
-        }
         
         .connection-status {
             position: absolute;
@@ -316,7 +420,15 @@
     <div class="meeting-container">
         <div class="main-content">
             <div class="video-grid" id="videoGrid">
-                <div class="video-container local" id="localVideoContainer">
+                <div class="main-video-container" id="mainVideoContainer">
+                    <div class="waiting-message" id="waitingMessage">
+                        <h2>Waiting for others to join...</h2>
+                        <p>Share the meeting code: <strong id="meetingCodeDisplay"></strong></p>
+                    </div>
+                    <div class="main-participant-name" id="mainParticipantName" style="display: none;"></div>
+                </div>
+                
+                <div class="local-video-container" id="localVideoContainer">
                     <video id="localVideo" autoplay muted playsinline></video>
                     <div class="participant-info" id="localParticipantInfo">You</div>
                     <div class="connection-status connected" id="connectionStatus">Connected</div>
@@ -472,8 +584,139 @@
             }
         }
         
-        // Create peer connection
-        function createPeerConnection(socketId) {
+        // Global variables for main video management
+        let mainVideoSocketId = null;
+        let remoteParticipants = new Map();
+
+        // Update the addRemoteVideo function
+        function addRemoteVideo(socketId, stream, userEmail = 'Participant') {
+            console.log('Adding remote video for:', socketId);
+            
+            // Store participant info
+            remoteParticipants.set(socketId, {
+                stream: stream,
+                userEmail: userEmail
+            });
+            
+            // If this is the first remote participant, show them in main video
+            if (!mainVideoSocketId) {
+                showInMainVideo(socketId, stream, userEmail);
+            }
+        }
+
+        // Show participant in main video area
+        function showInMainVideo(socketId, stream, userEmail) {
+            const mainContainer = document.getElementById('mainVideoContainer');
+            const waitingMessage = document.getElementById('waitingMessage');
+            const mainParticipantName = document.getElementById('mainParticipantName');
+            
+            // Hide waiting message
+            waitingMessage.style.display = 'none';
+            
+            // Remove existing main video if any
+            const existingVideo = mainContainer.querySelector('video');
+            if (existingVideo) {
+                existingVideo.remove();
+            }
+            
+            // Create new video element
+            const video = document.createElement('video');
+            video.autoplay = true;
+            video.playsinline = true;
+            video.srcObject = stream;
+            video.style.width = '100%';
+            video.style.height = '100%';
+            video.style.objectFit = 'cover';
+            
+            // Add video to main container
+            mainContainer.appendChild(video);
+            
+            // Update participant name
+            mainParticipantName.textContent = userEmail;
+            mainParticipantName.style.display = 'block';
+            
+            // Set as current main video
+            mainVideoSocketId = socketId;
+            
+            console.log('Main video set to:', userEmail);
+        }
+
+        // Update the removeRemoteVideo function
+        function removeRemoteVideo(socketId) {
+            console.log('Removing remote video for:', socketId);
+            
+            // Remove from participants map
+            remoteParticipants.delete(socketId);
+            
+            // If this was the main video participant
+            if (mainVideoSocketId === socketId) {
+                const mainContainer = document.getElementById('mainVideoContainer');
+                const waitingMessage = document.getElementById('waitingMessage');
+                const mainParticipantName = document.getElementById('mainParticipantName');
+                
+                // Remove video
+                const video = mainContainer.querySelector('video');
+                if (video) {
+                    video.remove();
+                }
+                
+                // Hide participant name
+                mainParticipantName.style.display = 'none';
+                
+                // Check if there are other participants to show
+                const remainingParticipants = Array.from(remoteParticipants.entries());
+                if (remainingParticipants.length > 0) {
+                    const [nextSocketId, nextParticipant] = remainingParticipants[0];
+                    showInMainVideo(nextSocketId, nextParticipant.stream, nextParticipant.userEmail);
+                } else {
+                    // Show waiting message
+                    waitingMessage.style.display = 'flex';
+                    mainVideoSocketId = null;
+                }
+            }
+            
+            // Close peer connection
+            if (peerConnections[socketId]) {
+                peerConnections[socketId].close();
+                delete peerConnections[socketId];
+            }
+        }
+
+        // Update socket event handlers to include user email
+        socket.on('user-joined', async ({ socketId, userEmail: joinedEmail }) => {
+            console.log('User joined:', joinedEmail);
+            showNotification(`${joinedEmail} joined the meeting`);
+            
+            const peerConnection = createPeerConnection(socketId, joinedEmail);
+            
+            // Create offer
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            
+            socket.emit('offer', {
+                offer: offer,
+                to: socketId
+            });
+        });
+
+        socket.on('offer', async ({ offer, from, userEmail: senderEmail }) => {
+            console.log('Received offer from:', senderEmail || from);
+            
+            const peerConnection = createPeerConnection(from, senderEmail);
+            await peerConnection.setRemoteDescription(offer);
+            
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            
+            socket.emit('answer', {
+                answer: answer,
+                to: from,
+                userEmail: userEmail
+            });
+        });
+
+        // Update createPeerConnection to store user email
+        function createPeerConnection(socketId, participantEmail = 'Participant') {
             const peerConnection = new RTCPeerConnection(configuration);
             
             // Add local stream tracks
@@ -486,7 +729,7 @@
             // Handle remote stream
             peerConnection.ontrack = (event) => {
                 const remoteStream = event.streams[0];
-                addRemoteVideo(socketId, remoteStream);
+                addRemoteVideo(socketId, remoteStream, participantEmail);
             };
             
             // Handle ICE candidates
@@ -509,92 +752,35 @@
             peerConnections[socketId] = peerConnection;
             return peerConnection;
         }
-        
-        // Update connection status
-        function updateConnectionStatus(state) {
-            connectionStatus.className = 'connection-status ' + state;
-            connectionStatus.textContent = state.charAt(0).toUpperCase() + state.slice(1);
-        }
-        
-        // Add remote video
-        function addRemoteVideo(socketId, stream) {
-            const existingContainer = document.getElementById(`video-${socketId}`);
-            if (existingContainer) {
-                const video = existingContainer.querySelector('video');
-                if (video) video.srcObject = stream;
-                return;
+
+        // Add click handler for local video to switch to main view
+        document.getElementById('localVideoContainer').addEventListener('click', () => {
+            if (mainVideoSocketId) {
+                // Switch local video to main view
+                const mainContainer = document.getElementById('mainVideoContainer');
+                const localVideo = document.getElementById('localVideo');
+                const mainParticipantName = document.getElementById('mainParticipantName');
+                
+                // Store current main video info
+                const currentMainParticipant = remoteParticipants.get(mainVideoSocketId);
+                
+                // Remove current main video
+                const currentMainVideo = mainContainer.querySelector('video');
+                if (currentMainVideo) {
+                    currentMainVideo.remove();
+                }
+                
+                // Clone local video for main display
+                const mainLocalVideo = localVideo.cloneNode();
+                mainLocalVideo.srcObject = localVideo.srcObject;
+                mainLocalVideo.muted = false; // Unmute for main display
+                mainContainer.appendChild(mainLocalVideo);
+                
+                // Update main participant name
+                mainParticipantName.textContent = `You (${userEmail})`;
+                
+                showNotification('Switched to your camera view');
             }
-            
-            const videoContainer = document.createElement('div');
-            videoContainer.className = 'video-container';
-            videoContainer.id = `video-${socketId}`;
-            
-            const video = document.createElement('video');
-            video.autoplay = true;
-            video.playsinline = true;
-            video.srcObject = stream;
-            
-            const participantInfo = document.createElement('div');
-            participantInfo.className = 'participant-info';
-            participantInfo.textContent = 'Participant';
-            
-            videoContainer.appendChild(video);
-            videoContainer.appendChild(participantInfo);
-            videoGrid.appendChild(videoContainer);
-        }
-        
-        // Remove remote video
-        function removeRemoteVideo(socketId) {
-            const videoContainer = document.getElementById(`video-${socketId}`);
-            if (videoContainer) {
-                videoContainer.remove();
-            }
-            
-            if (peerConnections[socketId]) {
-                peerConnections[socketId].close();
-                delete peerConnections[socketId];
-            }
-        }
-        
-        // Socket event handlers
-        socket.on('connect', () => {
-            updateConnectionStatus('connected');
-        });
-        
-        socket.on('disconnect', () => {
-            updateConnectionStatus('disconnected');
-            showNotification('Connection lost. Trying to reconnect...', 'error');
-        });
-        
-        socket.on('user-joined', async ({ socketId, userEmail: joinedEmail }) => {
-            console.log('User joined:', joinedEmail);
-            showNotification(`${joinedEmail} joined the meeting`);
-            
-            const peerConnection = createPeerConnection(socketId);
-            
-            // Create offer
-            const offer = await peerConnection.createOffer();
-            await peerConnection.setLocalDescription(offer);
-            
-            socket.emit('offer', {
-                offer: offer,
-                to: socketId
-            });
-        });
-        
-        socket.on('offer', async ({ offer, from }) => {
-            console.log('Received offer from:', from);
-            
-            const peerConnection = createPeerConnection(from);
-            await peerConnection.setRemoteDescription(offer);
-            
-            const answer = await peerConnection.createAnswer();
-            await peerConnection.setLocalDescription(answer);
-            
-            socket.emit('answer', {
-                answer: answer,
-                to: from
-            });
         });
         
         socket.on('answer', async ({ answer, from }) => {
@@ -834,6 +1020,9 @@
             }
             Object.values(peerConnections).forEach(pc => pc.close());
         });
+        
+        // Add this to the initialization
+        document.getElementById('meetingCodeDisplay').textContent = roomCode;
         
         // Initialize the application
         initializeMedia();
