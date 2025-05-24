@@ -143,14 +143,18 @@ io.on("connection", (socket) => {
           }
         })
 
-      // Send current participants to the new user
-      socket.emit("room-participants", roomParticipants)
+      // Send current participants to the new user AFTER a delay
+      setTimeout(() => {
+        socket.emit("room-participants", roomParticipants)
+      }, 1000)
 
-      // Notify others in the room about the new user
-      socket.to(roomCode).emit("user-joined", {
-        socketId: socket.id,
-        userEmail,
-      })
+      // Notify others in the room about the new user AFTER a delay
+      setTimeout(() => {
+        socket.to(roomCode).emit("user-joined", {
+          socketId: socket.id,
+          userEmail,
+        })
+      }, 1500)
 
       // Send participants count update to everyone
       io.to(roomCode).emit("participants-update", {

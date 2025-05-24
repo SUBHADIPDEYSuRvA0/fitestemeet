@@ -1005,16 +1005,22 @@
             // Add local stream tracks
             if (localStream) {
                 localStream.getTracks().forEach(track => {
-                    const sender = peerConnection.addTrack(track, localStream);
-                    console.log('📤 Added track:', track.kind);
+                    console.log('📤 Adding local track:', track.kind, 'to peer:', participantEmail);
+                    peerConnection.addTrack(track, localStream);
                 });
             }
             
-            // Handle remote stream
+            // Handle remote stream - FIXED
             peerConnection.ontrack = (event) => {
-                console.log('📥 Received remote track:', event.track.kind);
-                const remoteStream = event.streams[0];
-                addRemoteParticipant(socketId, remoteStream, participantEmail);
+                console.log('📥 Received remote track:', event.track.kind, 'from:', participantEmail);
+                const [remoteStream] = event.streams;
+                
+                if (remoteStream) {
+                    console.log('✅ Remote stream received, adding participant:', participantEmail);
+                    addRemoteParticipant(socketId, remoteStream, participantEmail);
+                } else {
+                    console.warn('⚠️ No remote stream in track event');
+                }
             };
             
             // Handle ICE candidates
@@ -1025,6 +1031,8 @@
                         candidate: event.candidate,
                         to: socketId
                     });
+                } else {
+                    console.log('🧊 ICE gathering complete for:', participantEmail);
                 }
             };
             
@@ -1043,13 +1051,46 @@
                 }
             };
             
+            // Add ICE connection state change handler
+            peerConnection.oniceconnectionstatechange = () => {
+                const state = peerConnection.iceConnectionState;
+                console.log(`🧊 ICE connection state with ${participantEmail}:`, state);
+                
+                if (state === 'failed' || state === 'disconnected') {
+                    console.log('🔄 ICE connection issues, restarting...');
+                    setTimeout(() => {
+                        if (peerConnection.iceConnectionState === 'failed') {
+                            peerConnection.restartIce();
+                        }
+                    }, 1000);
+                }
+            };
+            
             peerConnections.set(socketId, peerConnection);
             return peerConnection;
         }
         
-        // Add remote participant to the participants list
+        // Add remote participant to the participants list - FIXED
         function addRemoteParticipant(socketId, stream, userEmail = 'Participant') {
-            console.log('👤 Adding remote participant:', userEmail);
+            console.log('👤 Adding remote participant:', userEmail, 'with stream:', stream);
+            
+            // Check if participant already exists
+            if (remoteParticipants.has(socketId)) {
+                console.log('👤 Participant already exists, updating stream');
+                const existingParticipant = remoteParticipants.get(socketId);
+                existingParticipant.stream = stream;
+                
+                // Update existing video element
+                const existingElement = document.getElementById(`participant-${socketId}`);
+                if (existingElement) {
+                    const video = existingElement.querySelector('video');
+                    if (video) {
+                        video.srcObject = stream;
+                        console.log('📹 Updated existing video element');
+                    }
+                }
+                return;
+            }
             
             // Store participant info
             remoteParticipants.set(socketId, {
@@ -1065,20 +1106,51 @@
             participantDiv.className = 'participant-item';
             participantDiv.id = `participant-${socketId}`;
             
-            participantDiv.innerHTML = `
-                <video class="participant-video" autoplay playsinline></video>
-                <div class="participant-info">
-                    <div class="participant-name">${userEmail}</div>
-                    <div class="participant-status">
-                        <div class="status-icon audio-off" style="display: none;">🔇</div>
-                        <div class="status-icon video-off" style="display: none;">📹</div>
-                        <div class="status-icon screen-sharing" style="display: none;">🖥️</div>
-                    </div>
-                </div>
-            `;
+            // Check if stream has video tracks
+            const hasVideo = stream.getVideoTracks().length > 0 && stream.getVideoTracks()[0].enabled;
             
-            const video = participantDiv.querySelector('video');
-            video.srcObject = stream;
+            if (hasVideo) {
+                participantDiv.innerHTML = `
+                    <video class="participant-video" autoplay playsinline muted></video>
+                    <div class="participant-info">
+                        <div class="participant-name">${userEmail}</div>
+                        <div class="participant-status">
+                            <div class="status-icon audio-off" style="display: none;">🔇</div>
+                            <div class="status-icon video-off" style="display: none;">📹</div>
+                            <div class="status-icon screen-sharing" style="display: none;">🖥️</div>
+                        </div>
+                    </div>
+                `;
+                
+                const video = participantDiv.querySelector('video');
+                video.srcObject = stream;
+                
+                // Add video event listeners
+                video.onloadedmetadata = () => {
+                    console.log('📹 Video metadata loaded for:', userEmail);
+                    video.play().catch(e => console.error('Video play error:', e));
+                };
+                
+                video.onerror = (e) => {
+                    console.error('📹 Video error for:', userEmail, e);
+                };
+                
+            } else {
+                participantDiv.innerHTML = `
+                    <div class="no-video-participant">
+                        <div class="participant-avatar">${userEmail.charAt(0).toUpperCase()}</div>
+                        <div class="participant-name">${userEmail}</div>
+                    </div>
+                    <div class="participant-info">
+                        <div class="participant-name">${userEmail}</div>
+                        <div class="participant-status">
+                            <div class="status-icon audio-off" style="display: none;">🔇</div>
+                            <div class="status-icon video-off" style="display: flex;">📹</div>
+                            <div class="status-icon screen-sharing" style="display: none;">🖥️</div>
+                        </div>
+                    </div>
+                `;
+            }
             
             // Add click handler to switch to main view
             participantDiv.addEventListener('click', () => {
@@ -1088,9 +1160,11 @@
             participantsList.appendChild(participantDiv);
             
             // If this is the first remote participant and no main video is set, show them
-            if (!mainVideoSocketId) {
+            if (!mainVideoSocketId && hasVideo) {
                 showInMainVideo(socketId, stream, userEmail);
             }
+            
+            console.log('✅ Remote participant added successfully:', userEmail);
         }
         
         // Show participant in main video area
@@ -1222,11 +1296,21 @@
             for (const participant of participants) {
                 try {
                     allParticipants.set(participant.socketId, participant);
+                    
+                    console.log('🤝 Creating peer connection for existing participant:', participant.userEmail);
                     const peerConnection = createPeerConnection(participant.socketId, participant.userEmail);
                     
-                    const offer = await peerConnection.createOffer();
+                    // Wait a bit before creating offer
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    console.log('📤 Creating offer for existing participant:', participant.userEmail);
+                    const offer = await peerConnection.createOffer({
+                        offerToReceiveAudio: true,
+                        offerToReceiveVideo: true
+                    });
                     await peerConnection.setLocalDescription(offer);
                     
+                    console.log('📤 Sending offer to existing participant:', participant.userEmail);
                     socket.emit('offer', {
                         offer: offer,
                         to: participant.socketId
@@ -1246,19 +1330,28 @@
             allParticipants.set(socketId, { userEmail: joinedEmail, socketId });
             updatePrivateChatOptions();
             
-            try {
-                const peerConnection = createPeerConnection(socketId, joinedEmail);
-                
-                const offer = await peerConnection.createOffer();
-                await peerConnection.setLocalDescription(offer);
-                
-                socket.emit('offer', {
-                    offer: offer,
-                    to: socketId
-                });
-            } catch (error) {
-                console.error('❌ Error handling user joined:', error);
-            }
+            // Wait a bit for the user to set up their media
+            setTimeout(async () => {
+                try {
+                    console.log('🤝 Creating peer connection for new user:', joinedEmail);
+                    const peerConnection = createPeerConnection(socketId, joinedEmail);
+                    
+                    console.log('📤 Creating offer for:', joinedEmail);
+                    const offer = await peerConnection.createOffer({
+                        offerToReceiveAudio: true,
+                        offerToReceiveVideo: true
+                    });
+                    await peerConnection.setLocalDescription(offer);
+                    
+                    console.log('📤 Sending offer to:', joinedEmail);
+                    socket.emit('offer', {
+                        offer: offer,
+                        to: socketId
+                    });
+                } catch (error) {
+                    console.error('❌ Error handling user joined:', error);
+                }
+            }, 1000);
         });
         
         socket.on('offer', async ({ offer, from, fromUser }) => {
@@ -1270,17 +1363,22 @@
                     peerConnection = createPeerConnection(from, fromUser);
                 }
                 
-                await peerConnection.setRemoteDescription(offer);
+                console.log('📤 Setting remote description...');
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
                 
+                console.log('📤 Creating answer...');
                 const answer = await peerConnection.createAnswer();
                 await peerConnection.setLocalDescription(answer);
                 
+                console.log('📤 Sending answer to:', fromUser);
                 socket.emit('answer', {
                     answer: answer,
                     to: from
                 });
+                
             } catch (error) {
                 console.error('❌ Error handling offer:', error);
+                showNotification('Failed to establish connection', 'error');
             }
         });
         
@@ -1290,7 +1388,11 @@
             try {
                 const peerConnection = peerConnections.get(from);
                 if (peerConnection) {
-                    await peerConnection.setRemoteDescription(answer);
+                    console.log('📥 Setting remote description from answer...');
+                    await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+                    console.log('✅ Answer processed successfully');
+                } else {
+                    console.error('❌ No peer connection found for:', from);
                 }
             } catch (error) {
                 console.error('❌ Error handling answer:', error);
@@ -1302,8 +1404,11 @@
             
             try {
                 const peerConnection = peerConnections.get(from);
-                if (peerConnection) {
-                    await peerConnection.addIceCandidate(candidate);
+                if (peerConnection && peerConnection.remoteDescription) {
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                    console.log('✅ ICE candidate added successfully');
+                } else {
+                    console.warn('⚠️ Cannot add ICE candidate - no peer connection or remote description');
                 }
             } catch (error) {
                 console.error('❌ Error handling ICE candidate:', error);
