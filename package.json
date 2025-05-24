@@ -1,7 +1,7 @@
 {
   "name": "google-meet-clone",
   "version": "1.0.0",
-  "description": "A complete Google Meet clone with WebRTC, Socket.io, and all meeting features",
+  "description": "A complete Google Meet clone with WebRTC, Socket.io, multiple user videos, private chat, and screen recording",
   "main": "server.js",
   "type": "module",
   "scripts": {
@@ -11,12 +11,23 @@
     "test": "echo 'No tests specified'",
     "vercel-build": "echo 'No build step required'"
   },
-  "keywords": ["webrtc", "video-calling", "socket.io", "google-meet", "video-conference", "real-time", "peer-to-peer"],
+  "keywords": [
+    "webrtc",
+    "video-calling",
+    "socket.io",
+    "google-meet",
+    "video-conference",
+    "real-time",
+    "peer-to-peer",
+    "screen-recording",
+    "private-chat"
+  ],
   "author": "Your Name",
   "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
-    "socket.io": "^4.7.4"
+    "socket.io": "^4.7.4",
+    "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
