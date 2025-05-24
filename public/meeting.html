@@ -1658,10 +1658,10 @@
                 };
                 
                 // Fallback to vp8 if vp9 is not supported
-                // if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                //     options.mimeType = 'video/webm;co  {
-                //     options.mimeType = 'video/webm;codecs=vp8,opus';
-                // }
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    options.mimeType = 'video/webm;co{
+                    options.mimeType = 'video/webm;codecs=vp8,opus';
+                }
                 if (!MediaRecorder.isTypeSupported(options.mimeType)) {
                     options.mimeType = 'video/webm;codecs=vp8,opus';
                     }
