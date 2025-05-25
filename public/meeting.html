@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FITSTE - Meeting</title>
+    <title>Google Meet Clone - Meeting</title>
     <style>
         * {
             margin: 0;
@@ -20,7 +20,6 @@
         }
         
         .meeting-container {
-
             display: flex;
             height: 100vh;
             position: relative;
@@ -536,58 +535,10 @@
             animation: pulse 1s infinite;
         }
         
-        /* Fullscreen functionality */
-        .fullscreen-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            border: none;
-            color: white;
-            padding: 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            z-index: 10;
-            transition: all 0.2s;
-        }
-
-        .fullscreen-btn:hover {
-            background: rgba(0, 0, 0, 0.9);
-            transform: scale(1.1);
-        }
-
-        .main-video-container.fullscreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw !important;
-            height: 100vh !important;
-            z-index: 9999;
-            border-radius: 0;
-        }
-
-        .main-video-container.fullscreen video {
-            width: 100vw;
-            height: 100vh;
-            object-fit: contain;
-        }
-        
-        /* Mobile Responsive - UPDATED */
+        /* Mobile Responsive */
         @media (max-width: 1024px) {
             .participants-sidebar {
                 width: 250px;
-            }
-            
-            /* .controls {
-                padding: 12px 8px;
-                gap: 12px;
-            } */
-            
-            .control-btn {
-                width: 44px;
-                height: 44px;
-                font-size: 18px;
             }
         }
 
@@ -602,7 +553,7 @@
 
             .participants-sidebar {
                 width: 100%;
-                height: 180px;
+                height: 200px;
                 border-left: none;
                 border-top: 1px solid #3c4043;
                 order: 2;
@@ -624,8 +575,6 @@
             .main-video-area {
                 order: 1;
                 padding: 8px;
-                flex: 1;
-                min-height: 300px;
             }
 
             .main-participant-name {
@@ -640,41 +589,22 @@
             }
             
             .controls {
-                padding: 12px 8px;
-                gap: 8px;
-                background: #202124;
-                border-top: 2px solid #3c4043;
-                position: sticky;
-                bottom: 0;
-                z-index: 100;
-                min-height: 70px;
-                display: flex !important;
-                justify-content: center;
-                align-items: center;
                 flex-wrap: wrap;
+                gap: 8px;
+                padding: 12px;
             }
             
             .control-btn {
-                width: 42px !important;
-                height: 42px !important;
-                font-size: 16px !important;
-                display: flex !important;
-                align-items: center;
-                justify-content: center;
-                border-radius: 50%;
-                border: none;
-                cursor: pointer;
-                transition: all 0.2s;
-                position: relative;
-                flex-shrink: 0;
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
             }
             
             .meeting-info {
-                width: 100%;
-                text-align: center;
+                flex-direction: column;
+                gap: 8px;
                 font-size: 12px;
-                margin-bottom: 8px;
-                order: -1;
+                text-align: center;
             }
 
             .sidebar-header {
@@ -689,11 +619,10 @@
         @media (max-width: 480px) {
             .main-video-area {
                 padding: 4px;
-                min-height: 250px;
             }
 
             .participants-sidebar {
-                height: 140px;
+                height: 150px;
             }
 
             .participant-item {
@@ -712,46 +641,19 @@
             }
 
             .controls {
-                padding: 10px 6px !important;
-                gap: 6px !important;
-                min-height: 65px !important;
-                position: fixed !important;
-                bottom: 0 !important;
-                left: 0 !important;
-                right: 0 !important;
-                background: #202124 !important;
-                border-top: 2px solid #3c4043 !important;
-                z-index: 1000 !important;
+                padding: 8px;
+                gap: 6px;
             }
-            
+
             .control-btn {
-                width: 38px !important;
-                height: 38px !important;
-                font-size: 14px !important;
-                margin: 0 !important;
+                width: 36px;
+                height: 36px;
+                font-size: 14px;
             }
 
             .meeting-info {
                 font-size: 10px;
-                margin-bottom: 6px;
             }
-            
-            .main-content {
-                padding-bottom: 75px;
-            }
-        }
-
-        /* Ensure controls are always visible */
-        .controls {
-            visibility: visible !important;
-            opacity: 1 !important;
-            display: flex !important;
-        }
-
-        .control-btn {
-            visibility: visible !important;
-            opacity: 1 !important;
-            display: flex !important;
         }
 
         /* Scrollbar Styling */
@@ -783,7 +685,6 @@
             <div class="video-section">
                 <div class="main-video-area">
                     <div class="main-video-container" id="mainVideoContainer">
-                        <button class="fullscreen-btn" id="fullscreenBtn" title="Toggle fullscreen">⛶</button>
                         <div class="waiting-message" id="waitingMessage">
                             <h2>Waiting for others to join...</h2>
                             <p>Share the meeting code: <strong id="meetingCodeDisplay"></strong></p>
@@ -946,7 +847,7 @@
             meetingTime.textContent = minutes + ':' + seconds;
         }, 1000);
         
-        // Initialize media with always-on permissions
+        // Initialize media with better error handling
         async function initializeMedia() {
             try {
                 console.log('🎥 Requesting media access...');
@@ -967,21 +868,7 @@
                 
                 localStream = await navigator.mediaDevices.getUserMedia(constraints);
                 
-                // Always keep video and audio enabled by default
-                const videoTrack = localStream.getVideoTracks()[0];
-                const audioTrack = localStream.getAudioTracks()[0];
-                
-                if (videoTrack) {
-                    videoTrack.enabled = true;
-                    isVideoOff = false;
-                }
-                
-                if (audioTrack) {
-                    audioTrack.enabled = true;
-                    isAudioMuted = false;
-                }
-                
-                console.log('✅ Media access granted - Video and Audio ON by default');
+                console.log('✅ Media access granted');
                 
                 // Add local participant to the list
                 addLocalParticipant();
@@ -2046,79 +1933,37 @@
             chatInput.style.height = Math.min(chatInput.scrollHeight, 100) + 'px';
         });
         
-        // Fullscreen functionality
-        function toggleFullscreen() {
-            const mainContainer = document.getElementById('mainVideoContainer');
-            const fullscreenBtn = document.getElementById('fullscreenBtn');
-            
-            if (!mainContainer.classList.contains('fullscreen')) {
-                // Enter fullscreen
-                mainContainer.classList.add('fullscreen');
-                fullscreenBtn.textContent = '⛶';
-                fullscreenBtn.title = 'Exit fullscreen';
-                
-                // Hide other UI elements
-                document.querySelector('.participants-sidebar').style.display = 'none';
-                document.querySelector('.controls').style.display = 'none';
-                
-                showNotification('Press ESC to exit fullscreen');
-            } else {
-                // Exit fullscreen
-                exitFullscreen();
+        // Handle page unload
+        window.addEventListener('beforeunload', () => {
+            if (isRecording) {
+                stopRecording();
             }
-        }
-
-        function exitFullscreen() {
-            const mainContainer = document.getElementById('mainVideoContainer');
-            const fullscreenBtn = document.getElementById('fullscreenBtn');
-            
-            mainContainer.classList.remove('fullscreen');
-            fullscreenBtn.textContent = '⛶';
-            fullscreenBtn.title = 'Toggle fullscreen';
-            
-            // Show other UI elements
-            document.querySelector('.participants-sidebar').style.display = 'flex';
-            document.querySelector('.controls').style.display = 'flex';
-        }
-
-        // Handle ESC key for fullscreen exit
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                const mainContainer = document.getElementById('mainVideoContainer');
-                if (mainContainer.classList.contains('fullscreen')) {
-                    exitFullscreen();
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            if (screenStream) {
+                screenStream.getTracks().forEach(track => track.stop());
+            }
+            peerConnections.forEach(pc => pc.close());
+            socket.disconnect();
+        });
+        
+        // Handle window resize for mobile responsiveness
+        window.addEventListener('resize', () => {
+            // Adjust layout for mobile
+            if (window.innerWidth <= 768) {
+                if (isChatOpen) {
+                    chatPanel.style.width = '100%';
                 }
+            } else {
+                chatPanel.style.width = '350px';
             }
         });
-
-        // Add fullscreen button event listener
-        document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
         
-        // Initialize control buttons state
-        function initializeControlButtons() {
-            const micBtn = document.getElementById('micBtn');
-            const cameraBtn = document.getElementById('cameraBtn');
-            
-            // Set initial states (always on)
-            micBtn.classList.remove('muted');
-            micBtn.textContent = '🎤';
-            
-            cameraBtn.classList.remove('off');
-            cameraBtn.textContent = '📹';
-            
-            // Update local participant status
-            const localAudioStatus = document.getElementById('localAudioStatus');
-            const localVideoStatus = document.getElementById('localVideoStatus');
-            
-            if (localAudioStatus) localAudioStatus.style.display = 'none';
-            if (localVideoStatus) localVideoStatus.style.display = 'none';
-        }
-        
-        // Call this after media initialization
+        // Initialize the application
         console.log('🚀 Starting Enhanced Google Meet Clone...');
         setupChatTabs();
         initializeMedia();
-        initializeControlButtons();
     </script>
 </body>
 </html>
