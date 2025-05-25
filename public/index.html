@@ -297,17 +297,17 @@
             <div class="feature">
                 <div class="feature-icon">💬</div>
                 <div class="feature-title">Live Chat</div>
-                <div class="feature-desc">Group and private messaging</div>
-            </div>
-            <div class="feature">
-                <div class="feature-icon">⏺️</div>
-                <div class="feature-title">Recording</div>
-                <div class="feature-desc">Record and save meetings</div>
+                <div class="feature-desc">Chat during meetings with timestamps</div>
             </div>
             <div class="feature">
                 <div class="feature-icon">📱</div>
                 <div class="feature-title">Mobile Ready</div>
                 <div class="feature-desc">Works on all devices</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔒</div>
+                <div class="feature-title">Secure</div>
+                <div class="feature-desc">End-to-end encrypted calls</div>
             </div>
         </div>
     </div>
@@ -376,15 +376,15 @@
         async function showActiveRooms() {
             try {
                 const response = await fetch('/api/rooms');
-                const result = await response.json();
+                const rooms = await response.json();
                 
-                if (result.data.length === 0) {
+                if (rooms.length === 0) {
                     alert('No active meetings found. Start a new meeting!');
                     return;
                 }
                 
                 let roomsList = 'Active Meetings:\\n\\n';
-                result.data.forEach(room => {
+                rooms.forEach(room => {
                     const time = new Date(room.createdAt).toLocaleTimeString();
                     roomsList += `Code: ${room.code} (${room.participantCount} participants) - Started at ${time}\\n`;
                 });
@@ -399,13 +399,11 @@
         // Load statistics
         async function loadStats() {
             try {
-                const response = await fetch('/api/stats');
+                const response = await fetch('/api/health');
                 const data = await response.json();
                 
-                if (data.success) {
-                    activeRoomsEl.textContent = data.data.activeRooms || 0;
-                    totalParticipantsEl.textContent = data.data.totalParticipants || 0;
-                }
+                activeRoomsEl.textContent = data.activeRooms || 0;
+                totalParticipantsEl.textContent = data.totalParticipants || 0;
             } catch (error) {
                 console.error('Error loading stats:', error);
             }
