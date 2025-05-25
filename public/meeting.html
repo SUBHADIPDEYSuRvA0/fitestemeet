@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Meet Clone - Meeting</title>
+    <title>FITSTE - Meeting</title>
     <style>
         * {
             margin: 0;
@@ -20,6 +20,7 @@
         }
         
         .meeting-container {
+
             display: flex;
             height: 100vh;
             position: relative;
@@ -96,34 +97,6 @@
         .waiting-message p {
             font-size: 16px;
             opacity: 0.8;
-        }
-
-        /* End Meeting Button - Under Main Video */
-        .end-meeting-btn {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #ea4335;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 24px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 12px rgba(234, 67, 53, 0.3);
-        }
-
-        .end-meeting-btn:hover {
-            background: #d33b2c;
-            transform: translateX(-50%) translateY(-2px);
-            box-shadow: 0 6px 16px rgba(234, 67, 53, 0.4);
         }
 
         /* Participants Sidebar */
@@ -266,7 +239,6 @@
             gap: 16px;
             border-top: 1px solid #3c4043;
             flex-wrap: wrap;
-            min-height: 80px;
         }
         
         .control-btn {
@@ -332,6 +304,11 @@
             color: white;
         }
         
+        .control-btn.leave {
+            background: #ea4335;
+            color: white;
+        }
+        
         .control-btn:hover {
             transform: scale(1.1);
         }
@@ -360,7 +337,7 @@
             flex-wrap: wrap;
         }
         
-        /* Chat Panel - Improved */
+        /* Chat Panel */
         .chat-panel {
             position: fixed;
             top: 0;
@@ -386,7 +363,6 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-shrink: 0;
         }
 
         .chat-tabs {
@@ -421,7 +397,6 @@
             flex: 1;
             overflow-y: auto;
             padding: 16px;
-            scroll-behavior: smooth;
         }
         
         .chat-message {
@@ -452,7 +427,6 @@
             padding: 8px 16px;
             border-bottom: 1px solid #3c4043;
             display: none;
-            flex-shrink: 0;
         }
 
         .private-chat-selector.active {
@@ -472,7 +446,6 @@
         .chat-input-container {
             padding: 16px;
             border-top: 1px solid #3c4043;
-            flex-shrink: 0;
         }
         
         .chat-input {
@@ -490,49 +463,6 @@
         
         .chat-input:focus {
             border-color: #1a73e8;
-        }
-
-        /* Chat Guide */
-        .chat-guide {
-            position: fixed;
-            bottom: 100px;
-            right: 20px;
-            background: #1a73e8;
-            color: white;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
-            z-index: 1001;
-            display: none;
-            align-items: center;
-            gap: 8px;
-            max-width: 250px;
-            animation: slideInUp 0.3s ease;
-        }
-
-        .chat-guide.show {
-            display: flex;
-        }
-
-        .chat-guide-close {
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-            font-size: 16px;
-            margin-left: auto;
-        }
-
-        @keyframes slideInUp {
-            from {
-                transform: translateY(20px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
         }
         
         .connection-status {
@@ -643,95 +573,25 @@
             object-fit: contain;
         }
         
-        /* Responsive Design - Enhanced */
-        
-        /* Large Desktop */
-        @media (min-width: 1440px) {
-            .participants-sidebar {
-                width: 350px;
-            }
-            
-            .control-btn {
-                width: 52px;
-                height: 52px;
-                font-size: 22px;
-            }
-            
-            .chat-panel {
-                width: 400px;
-            }
-        }
-
-        /* Desktop */
-        @media (max-width: 1200px) {
-            .participants-sidebar {
-                width: 280px;
-            }
-            
-            .main-participant-name {
-                font-size: 14px;
-                padding: 6px 10px;
-            }
-        }
-
-        /* Tablet */
+        /* Mobile Responsive - UPDATED */
         @media (max-width: 1024px) {
             .participants-sidebar {
                 width: 250px;
             }
             
-            .controls {
+            /* .controls {
                 padding: 12px 8px;
                 gap: 12px;
-            }
+            } */
             
             .control-btn {
                 width: 44px;
                 height: 44px;
                 font-size: 18px;
             }
-            
-            .chat-panel {
-                width: 320px;
-            }
-            
-            .end-meeting-btn {
-                padding: 10px 20px;
-                font-size: 13px;
-            }
         }
 
-        /* Mobile Landscape */
-        @media (max-width: 768px) and (orientation: landscape) {
-            .meeting-container {
-                flex-direction: row;
-            }
-            
-            .participants-sidebar {
-                width: 200px;
-                height: 100vh;
-            }
-            
-            .participants-list {
-                display: flex;
-                flex-direction: column;
-                overflow-y: auto;
-                overflow-x: hidden;
-            }
-            
-            .participant-item {
-                min-width: auto;
-                margin-bottom: 8px;
-            }
-            
-            .participant-video,
-            .no-video-participant {
-                height: 100px;
-            }
-        }
-
-        /* Mobile Portrait */
-        @media (max-width: 768px) and (orientation: portrait) {
+        @media (max-width: 768px) {
             .meeting-container {
                 flex-direction: column;
             }
@@ -742,7 +602,7 @@
 
             .participants-sidebar {
                 width: 100%;
-                height: 160px;
+                height: 180px;
                 border-left: none;
                 border-top: 1px solid #3c4043;
                 order: 2;
@@ -759,7 +619,6 @@
             .participant-item {
                 min-width: 120px;
                 margin-bottom: 0;
-                flex-shrink: 0;
             }
 
             .main-video-area {
@@ -772,8 +631,8 @@
             .main-participant-name {
                 top: 10px;
                 left: 10px;
-                font-size: 12px;
-                padding: 4px 8px;
+                font-size: 14px;
+                padding: 6px 10px;
             }
             
             .chat-panel {
@@ -782,7 +641,7 @@
             
             .controls {
                 padding: 12px 8px;
-                gap: 10px;
+                gap: 8px;
                 background: #202124;
                 border-top: 2px solid #3c4043;
                 position: sticky;
@@ -796,8 +655,8 @@
             }
             
             .control-btn {
-                width: 40px !important;
-                height: 40px !important;
+                width: 42px !important;
+                height: 42px !important;
                 font-size: 16px !important;
                 display: flex !important;
                 align-items: center;
@@ -813,35 +672,20 @@
             .meeting-info {
                 width: 100%;
                 text-align: center;
-                font-size: 11px;
+                font-size: 12px;
                 margin-bottom: 8px;
                 order: -1;
             }
 
             .sidebar-header {
-                padding: 10px;
+                padding: 12px;
             }
 
             .sidebar-title {
                 font-size: 14px;
             }
-            
-            .end-meeting-btn {
-                bottom: 10px;
-                padding: 8px 16px;
-                font-size: 12px;
-            }
-            
-            .chat-guide {
-                bottom: 80px;
-                right: 10px;
-                max-width: 200px;
-                font-size: 12px;
-                padding: 8px 12px;
-            }
         }
 
-        /* Small Mobile */
         @media (max-width: 480px) {
             .main-video-area {
                 padding: 4px;
@@ -868,9 +712,9 @@
             }
 
             .controls {
-                padding: 8px 4px !important;
+                padding: 10px 6px !important;
                 gap: 6px !important;
-                min-height: 60px !important;
+                min-height: 65px !important;
                 position: fixed !important;
                 bottom: 0 !important;
                 left: 0 !important;
@@ -881,60 +725,19 @@
             }
             
             .control-btn {
-                width: 36px !important;
-                height: 36px !important;
+                width: 38px !important;
+                height: 38px !important;
                 font-size: 14px !important;
                 margin: 0 !important;
             }
 
             .meeting-info {
                 font-size: 10px;
-                margin-bottom: 4px;
+                margin-bottom: 6px;
             }
             
             .main-content {
-                padding-bottom: 70px;
-            }
-            
-            .end-meeting-btn {
-                bottom: 8px;
-                padding: 6px 12px;
-                font-size: 11px;
-            }
-            
-            .chat-panel {
-                width: 100vw;
-            }
-            
-            .chat-guide {
-                bottom: 70px;
-                right: 5px;
-                max-width: 180px;
-                font-size: 11px;
-                padding: 6px 10px;
-            }
-        }
-
-        /* Extra Small Mobile */
-        @media (max-width: 360px) {
-            .control-btn {
-                width: 32px !important;
-                height: 32px !important;
-                font-size: 12px !important;
-            }
-            
-            .controls {
-                gap: 4px !important;
-                padding: 6px 2px !important;
-            }
-            
-            .meeting-info {
-                font-size: 9px;
-            }
-            
-            .end-meeting-btn {
-                padding: 4px 10px;
-                font-size: 10px;
+                padding-bottom: 75px;
             }
         }
 
@@ -955,7 +758,6 @@
         .participants-list::-webkit-scrollbar,
         .chat-messages::-webkit-scrollbar {
             width: 6px;
-            height: 6px;
         }
 
         .participants-list::-webkit-scrollbar-track,
@@ -973,11 +775,6 @@
         .chat-messages::-webkit-scrollbar-thumb:hover {
             background: #8ab4f8;
         }
-
-        /* Horizontal scrollbar for mobile participants */
-        .participants-list::-webkit-scrollbar:horizontal {
-            height: 4px;
-        }
     </style>
 </head>
 <body>
@@ -987,9 +784,6 @@
                 <div class="main-video-area">
                     <div class="main-video-container" id="mainVideoContainer">
                         <button class="fullscreen-btn" id="fullscreenBtn" title="Toggle fullscreen">⛶</button>
-                        <button class="end-meeting-btn" id="endMeetingBtn" title="End meeting">
-                            📞 End Meeting
-                        </button>
                         <div class="waiting-message" id="waitingMessage">
                             <h2>Waiting for others to join...</h2>
                             <p>Share the meeting code: <strong id="meetingCodeDisplay"></strong></p>
@@ -1035,6 +829,10 @@
                     💬
                     <div class="badge" id="chatBadge" style="display: none;">0</div>
                 </button>
+                
+                <button class="control-btn leave" id="leaveBtn" title="Leave meeting">
+                    📞
+                </button>
             </div>
         </div>
         
@@ -1062,11 +860,6 @@
                 <textarea class="chat-input" id="chatInput" placeholder="Send a message..." rows="1"></textarea>
             </div>
         </div>
-    </div>
-    
-    <div class="chat-guide" id="chatGuide">
-        <span>💬 Swipe or scroll to see more messages</span>
-        <button class="chat-guide-close" id="chatGuideClose">✕</button>
     </div>
     
     <div class="recording-indicator" id="recordingIndicator">
@@ -1111,7 +904,6 @@
         const meetingTime = document.getElementById('meetingTime');
         const notification = document.getElementById('notification');
         const recordingIndicator = document.getElementById('recordingIndicator');
-        const chatGuide = document.getElementById('chatGuide');
         
         // Enhanced WebRTC configuration
         const configuration = {
@@ -1144,7 +936,6 @@
         let currentChatMode = 'group'; // 'group' or 'private'
         let unreadMessages = 0;
         let allParticipants = new Map(); // Store all participants info
-        let chatGuideShown = false; // Track if chat guide has been shown
         
         // Meeting timer
         let meetingStartTime = Date.now();
@@ -1839,11 +1630,6 @@
             chatMessages.appendChild(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
             
-            // Show chat guide on first message if not shown before
-            if (!chatGuideShown && chatMessages.children.length === 1) {
-                showChatGuide();
-            }
-            
             // Show notification and update badge if chat is closed
             if (!isChatOpen) {
                 unreadMessages++;
@@ -1885,23 +1671,6 @@
             }
         }
         
-        // Chat guide functionality
-        function showChatGuide() {
-            if (!chatGuideShown) {
-                chatGuide.classList.add('show');
-                chatGuideShown = true;
-                
-                // Auto-hide after 5 seconds
-                setTimeout(() => {
-                    hideChatGuide();
-                }, 5000);
-            }
-        }
-        
-        function hideChatGuide() {
-            chatGuide.classList.remove('show');
-        }
-        
         // Recording functionality
         async function startRecording() {
             try {
@@ -1925,13 +1694,10 @@
                 };
                 
                 // Fallback to vp8 if vp9 is not supported
-                // if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                //     options.mimeType = 'video/webm;co  {
-                //     options.mimeType = 'video/webm;codecs=vp8,opus';
-                // }
                 if (!MediaRecorder.isTypeSupported(options.mimeType)) {
                     options.mimeType = 'video/webm;codecs=vp8,opus';
-            }
+                }
+                
                 mediaRecorder = new MediaRecorder(streamToRecord, options);
                 
                 mediaRecorder.ondataavailable = (event) => {
@@ -2260,7 +2026,7 @@
         document.getElementById('recordBtn').addEventListener('click', toggleRecording);
         document.getElementById('chatBtn').addEventListener('click', toggleChat);
         document.getElementById('chatClose').addEventListener('click', toggleChat);
-        document.getElementById('endMeetingBtn').addEventListener('click', leaveMeeting);
+        document.getElementById('leaveBtn').addEventListener('click', leaveMeeting);
         
         // Chat input handlers
         chatInput.addEventListener('keypress', (e) => {
@@ -2279,9 +2045,6 @@
             chatInput.style.height = 'auto';
             chatInput.style.height = Math.min(chatInput.scrollHeight, 100) + 'px';
         });
-        
-        // Chat guide event listeners
-        document.getElementById('chatGuideClose').addEventListener('click', hideChatGuide);
         
         // Fullscreen functionality
         function toggleFullscreen() {
@@ -2351,34 +2114,7 @@
             if (localVideoStatus) localVideoStatus.style.display = 'none';
         }
         
-        // Handle page unload
-        window.addEventListener('beforeunload', () => {
-            if (isRecording) {
-                stopRecording();
-            }
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-            }
-            if (screenStream) {
-                screenStream.getTracks().forEach(track => track.stop());
-            }
-            peerConnections.forEach(pc => pc.close());
-            socket.disconnect();
-        });
-        
-        // Handle window resize for mobile responsiveness
-        window.addEventListener('resize', () => {
-            // Adjust layout for mobile
-            if (window.innerWidth <= 768) {
-                if (isChatOpen) {
-                    chatPanel.style.width = '100%';
-                }
-            } else {
-                chatPanel.style.width = '350px';
-            }
-        });
-        
-        // Initialize the application
+        // Call this after media initialization
         console.log('🚀 Starting Enhanced Google Meet Clone...');
         setupChatTabs();
         initializeMedia();
